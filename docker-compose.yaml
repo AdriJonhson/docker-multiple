@@ -1,0 +1,54 @@
+version: '3.5'
+
+services:
+
+  mysql:
+    build: ./docker/mysql
+    container_name: ${PREFIX_NAME}_mysql
+    restart: always
+    networks:
+      app-network:
+        ipv4_address: 10.2.0.2
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=docker
+      - MYSQL_PASSWORD=secret
+
+  nginx:
+    build: ./docker/nginx
+    container_name: ${PREFIX_NAME}_nginx
+    working_dir: /var/www/
+    networks:
+      - app-network
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      -  ./docker/nginx/sites/:/etc/nginx/conf.d:ro
+      - .././:/var/www/
+
+  php_fpm:
+    build: ./docker/php-fpm
+    container_name: ${PREFIX_NAME}_php_fpm
+    working_dir: /var/www/
+    networks:
+      - app-network
+    volumes:
+      - .././:/var/www/
+
+  mailhog:
+    build: ./docker/mailhog
+    container_name: ${PREFIX_NAME}_mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.2.0.0/16
